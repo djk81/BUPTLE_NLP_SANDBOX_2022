@@ -51,18 +51,20 @@ def basic_test_by_list(list_1, list_2):
                 "2": another
             })
 
-    newlist = sorted(result, key=lambda d: d["P"])[-20:]
+    newlist = sorted(result, key=lambda d: d["P"])#[-20:]
 
     print("RESULT =================================")
-    with open( str(int(round(time.time() * 1000))) + '.txt', 'w', encoding="UTF-8") as f:
+    result_file_name = str(int(round(time.time() * 1000))) + '.txt'
+    with open( result_file_name, 'w', encoding="UTF-8") as f:
         for log in newlist:
-            print(log['P'])
-            print(log['1'])
-            print(log['2'])
+            #print(log['P'])
+            #print(log['1'])
+            #print(log['2'])
 
             f.writelines(str(log['P'])+"\n")
             f.writelines(log['1']+"\n")
             f.writelines(log['2']+"\n\n")
+    print("[최종종료] ===============================> {}".format(result_file_name))
     return result
 
 
@@ -117,6 +119,7 @@ def get_pooler_output(text):
 def send_request_split_to_sentence(text):
     """
     문장 쪼개기 API
+    일일 5천건, 단건 1만글자 제한
     :param text:
     :return:
     """
@@ -144,14 +147,17 @@ if __name__ == '__main__':
     profiler = Profile()
 
     기사_1 = """
-    스프링 컨테이너에서 의존관계를 맺어주는 방식으로만 코드가 사용된다면 상관없지만 스프링과 무관하게 직접 오브젝트를 생성하고 다른 오브젝트를 주입해서 태스트히는 순수한 단위 태스트를 만드는 경우에는 수정자 메소드가 필요하다.
+    그 모리스 스타일의벽지도 잘 보였고, 점잖은 빛깔의 크레톤 천을 씌운 의자는 사라졌으며, 그전에 애슐리가든의 응접실 벽을 장식했던 안들 사라사는 목격 되었다.
+    어머니와 어린애는 나와 스트릭랜드의 차남일 것이다.
     """
 
     print("파일 load 시작")
-    기사_2 = ""
     txt_file2 = open(str(pathlib.Path().resolve()) + "/input2.txt", encoding="UTF-8")
+
+    기사_2_리스트 = []
     for line in txt_file2:
-        기사_2 += line
+        if '@@@' not in line:
+            기사_2_리스트.append(line)
     print("파일 load 완료")
 
     # 문장 쪼개기 1
@@ -160,18 +166,15 @@ if __name__ == '__main__':
     for x in tqdm(json_rtn_1['return_object']['sentence']):
         list_1.append(x['text'].strip())
 
-    # 문장 쪼개기 2
-    기사_2 = 기사_2.split('\n')
-    x = 4900
-    output = [기사_2[i: i + x] for i in range(0, len(기사_2), x)]
-
+    # 문장 쪼개기 2 - 1만라인 미만
     json_rtn_2 = []
-    for out_1depth in tqdm(output):
+    for out_1depth in tqdm(기사_2_리스트):
         json_rtn_2.append(send_request_split_to_sentence(out_1depth))
 
-    list_2 = []
-    for x in tqdm(json_rtn_2['return_object']['sentence']):
-        list_2.append(x['text'].strip())
+    for tmp in tqdm(json_rtn_2):
+        list_2 = []
+        for x in tqdm(tmp['return_object']['sentence']):
+            list_2.append(x['text'].strip())
 
     # 실행 & 성능 측정
     basic_test_by_list(list_1, list_2)
